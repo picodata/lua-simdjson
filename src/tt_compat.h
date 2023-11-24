@@ -6,11 +6,16 @@
  */
 void tt_compat_init(lua_State *L);
 
+// Variable is needed to avoid collisions in LUA_REGISTRY.
+extern const char TT_NULL_ADDR;
 
 /* Pushes tarantool's null onto the stack.
  * It requires `tt_lua_init` to be called first.
  */
-void tt_lua_pushnull(lua_State *L);
+inline void tt_lua_pushnull(lua_State *L) {
+  lua_pushlightuserdata(L, (void *)&TT_NULL_ADDR);
+  lua_gettable(L, LUA_REGISTRYINDEX);
+}
 
 extern char* SER_MARKER_SEQ;
 extern char* SER_MARKER_MAP;
