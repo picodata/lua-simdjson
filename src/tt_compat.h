@@ -27,4 +27,9 @@ extern char* SER_MARKER_MAP;
  * 2) `map`: table was a table in the original json.
  * `marker` param must be one of defined `SER_MARKER_*` consts.
  */
-void tt_lua_push_serialize_mt(lua_State *L, char* marker);
+inline void tt_lua_push_serialize_mt(lua_State *L, char* marker) {
+  lua_createtable(L, 0, 1);
+  lua_pushstring(L, "__serialize");
+  lua_pushstring(L, marker);
+  lua_settable(L, -3);
+}

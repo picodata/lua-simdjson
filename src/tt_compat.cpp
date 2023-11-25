@@ -21,9 +21,3 @@ void tt_compat_init(lua_State *L) {
   tt_lua_createnull(L);
 }
 
-void tt_lua_push_serialize_mt(lua_State *L, char* marker) {
-  lua_createtable(L, 0, 1);
-  lua_pushstring(L, "__serialize");
-  lua_pushstring(L, marker);
-  lua_settable(L, -3);
-}
