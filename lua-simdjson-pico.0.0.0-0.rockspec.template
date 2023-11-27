@@ -1,8 +1,10 @@
+-- Rockspecs template for picodata version.
+-- Copy it, replace tag in source and change version.
 package="lua-simdjson"
-version="pico.0.0.3-1"
+version="pico.0.0.0-0"
 source = {
    url = "git://github.com/picodata/lua-simdjson",
-   tag = "0.0.3"
+   tag = "0.0.0"
 }
 description = {
    summary = "This is a simple Lua binding for simdjson",
