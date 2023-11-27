@@ -4,11 +4,25 @@
 #include "simdjson.h"
 #include "luasimdjson.h"
 
+#ifdef TT_COMPAT
+#include "tt_compat.h"
+#endif
+
 #define LUA_SIMDJSON_NAME       "simdjson"
 #define LUA_SIMDJSON_VERSION    "0.0"
 
 using namespace simdjson;
 
+/* Push "null" value to the stack.
+ * By default it is lightuserdata, but in tarantool world it is cdata void*, hence such function exists.
+*/
+static void lua_pushnull(lua_State *L) {
+    #ifdef TT_COMPAT
+      tt_lua_pushnull(L);
+    #else
+      lua_pushlightuserdata(L, NULL);
+    #endif
+}
 
 #if !defined(luaL_newlibtable) && (!defined LUA_VERSION_NUM || LUA_VERSION_NUM<=501)
 /*
@@ -38,6 +52,12 @@ void convert_element_to_table(lua_State *L, dom::element element) {
       {
           int count = 1;
           lua_newtable(L);
+
+          #ifdef TT_COMPAT
+            tt_lua_push_serialize_mt(L, SER_MARKER_SEQ);
+            lua_setmetatable(L, -2);
+          #endif
+
           for (dom::element child : dom::array(element)) {
             lua_pushinteger(L, count);
             convert_element_to_table(L, child);
@@ -49,6 +69,12 @@ void convert_element_to_table(lua_State *L, dom::element element) {
     
     case dom::element_type::OBJECT:
       lua_newtable(L);
+
+      #ifdef TT_COMPAT
+        tt_lua_push_serialize_mt(L, SER_MARKER_MAP);
+        lua_setmetatable(L, -2);
+      #endif
+
       for (dom::key_value_pair field : dom::object(element)) {
 
         std::string_view view(field.key);
@@ -83,7 +109,7 @@ void convert_element_to_table(lua_State *L, dom::element element) {
       break;
     
     case dom::element_type::NULL_VALUE:
-      lua_pushlightuserdata(L, NULL);
+      lua_pushnull(L);
       break;
   }
 }
@@ -244,6 +270,9 @@ static const struct luaL_Reg arraylib_m [] = {
 };
 
 int luaopen_simdjson (lua_State *L) {
+    #ifdef TT_COMPAT
+      tt_compat_init(L);
+    #endif
     luaL_newmetatable(L, LUA_MYOBJECT);
      lua_pushvalue(L, -1); /* duplicates the metatable */
     lua_setfield(L, -2, "__index");
@@ -254,7 +283,7 @@ int luaopen_simdjson (lua_State *L) {
     lua_newtable(L);
     luaL_setfuncs (L, luasimdjson, 0);
 
-    lua_pushlightuserdata(L, NULL);
+    lua_pushnull(L);
     lua_setfield(L, -2, "null");
 
     lua_pushliteral(L, LUA_SIMDJSON_NAME);
