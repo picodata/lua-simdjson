@@ -283,7 +283,7 @@ int luaopen_simdjson (lua_State *L) {
     lua_newtable(L);
     luaL_setfuncs (L, luasimdjson, 0);
 
-    lua_pushlightuserdata(L, NULL);
+    lua_pushnull(L);
     lua_setfield(L, -2, "null");
 
     lua_pushliteral(L, LUA_SIMDJSON_NAME);
