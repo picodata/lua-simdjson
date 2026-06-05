@@ -1,6 +1,10 @@
+#include <cstdint>
 #include <lua.hpp>
 #include <lauxlib.h>
+#include <module.h>
 #include "tt_compat.h"
+
+static constexpr int64_t TT_INT64_THRESHOLD = INT64_C(100000000000000);
 
 char* SER_MARKER_MAP = (char*)"map";
 char* SER_MARKER_SEQ = (char*)"seq";
@@ -19,5 +23,21 @@ static void tt_lua_createnull(lua_State *L) {
 
 void tt_compat_init(lua_State *L) {
   tt_lua_createnull(L);
+}
+
+void tt_lua_pushinteger64(lua_State *L, int64_t val) {
+  if (val >= TT_INT64_THRESHOLD || val <= -TT_INT64_THRESHOLD) {
+    luaL_pushint64(L, val);
+  } else {
+    lua_pushnumber(L, static_cast<lua_Number>(val));
+  }
+}
+
+void tt_lua_pushuint64(lua_State *L, uint64_t val) {
+  if (val > static_cast<uint64_t>(INT64_MAX) || val >= static_cast<uint64_t>(TT_INT64_THRESHOLD)) {
+    luaL_pushuint64(L, val);
+  } else {
+    lua_pushnumber(L, static_cast<lua_Number>(val));
+  }
 }
 

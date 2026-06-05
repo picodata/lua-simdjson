@@ -3,33 +3,56 @@ name: CI
 on: push
 
 jobs:
-  lua:
+  test:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - lua: lua=5.1
-          - lua: lua=5.2
-          - lua: lua=5.3
-          - lua: lua=5.4
-          - lua: luajit=2.0
-          - lua: luajit=2.1
+        lua: [lua5.1, lua5.2, lua5.3, lua5.4, luajit2.0, luajit2.1]
+
     runs-on: ubuntu-22.04
+
     steps:
-      # Checks-out the repository under $GITHUB_WORKSPACE.
-      - uses: actions/checkout@v3
-      - name: Install Lua (${{ matrix.lua }})
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install hererocks
+        run: pip install hererocks
+
+      - name: Setup Lua (${{ matrix.lua }})
         run: |
-          pip install hererocks
-          hererocks lua_install -r^ --${{ matrix.lua }}
-          export PATH=$PATH:$PWD/lua_install/bin
+          case "${{ matrix.lua }}" in
+            lua5.1)    FLAG="--lua=5.1" ;;
+            lua5.2)    FLAG="--lua=5.2" ;;
+            lua5.3)    FLAG="--lua=5.3" ;;
+            lua5.4)    FLAG="--lua=5.4" ;;
+            luajit2.0) FLAG="--luajit=2.0" ;;
+            luajit2.1) FLAG="--luajit=2.1" ;;
+          esac
+          hererocks lua_env -r^ $FLAG
+          echo "LUA_ENV=$PWD/lua_env" >> $GITHUB_ENV
+          echo "$PWD/lua_env/bin" >> $GITHUB_PATH
+
+      - name: Upgrade LuaRocks (LuaJIT only)
+        if: startsWith(matrix.lua, 'luajit')
+        run: |
+          # hererocks bundles LuaRocks 3.8; its manifest exceeds LuaJIT's
+          # 65536 constants limit. Install LuaRocks 3.12 manually instead.
+          curl -fsSL https://luarocks.org/releases/luarocks-3.12.0.tar.gz | tar xz
+          cd luarocks-3.12.0
+          ./configure --with-lua="$LUA_ENV" --prefix="$LUA_ENV"
+          make build install
+
+      - name: Install dependencies
+        run: |
           luarocks install lua-cjson2
-      - name: Build lua-simdjson
-        run: |
-          export PATH=$PATH:$PWD/lua_install/bin
-          luarocks make
-      - name: Run tests
-        run: |
-          export PATH=$PATH:$PWD/lua_install/bin
           luarocks install busted
-          busted --verbose
+
+      - name: Build project
+        run: luarocks make
+
+      - name: Run tests
+        run: busted --verbose

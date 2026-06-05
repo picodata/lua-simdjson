@@ -86,11 +86,19 @@ void convert_element_to_table(lua_State *L, dom::element element) {
       break;
     
     case dom::element_type::INT64:
-      lua_pushinteger(L, int64_t(element));
+      #ifdef TT_COMPAT
+        tt_lua_pushinteger64(L, int64_t(element));
+      #else
+        lua_pushinteger(L, int64_t(element));
+      #endif
       break;
 
     case dom::element_type::UINT64:
-      lua_pushinteger(L, int64_t(element));
+      #ifdef TT_COMPAT
+        tt_lua_pushuint64(L, uint64_t(element));
+      #else
+        lua_pushinteger(L, int64_t(element));
+      #endif
       break;
     
     case dom::element_type::DOUBLE:
