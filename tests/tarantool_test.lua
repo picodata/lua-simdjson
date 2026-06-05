@@ -26,6 +26,20 @@ g.test_compat_with_tarantool_json = function()
   end
 end
 
+g.test_large_integers = function()
+  local cases = {
+    '42',
+    '100000000000000',
+    '123456789012345678',
+    '-100000000000000',
+    '9223372036854775808',
+  }
+  for _, num in ipairs(cases) do
+    local raw_json = '{"n":' .. num .. '}'
+    t.assert_equals(simdjson.parse(raw_json), tt_json.decode(raw_json), num)
+  end
+end
+
 g.test_serialize_markers = function ()
   local result = simdjson.parse('{"nested": {"emptyMap": {}}, "emptyArray": []}')
   t.assert_equals(getmetatable(result), {__serialize = "map"})

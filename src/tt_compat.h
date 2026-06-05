@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <lua.hpp>
 #include <lauxlib.h>
 
@@ -33,3 +34,9 @@ inline void tt_lua_push_serialize_mt(lua_State *L, char* marker) {
   lua_pushstring(L, marker);
   lua_settable(L, -3);
 }
+
+/* Push 64-bit integers the same way as tarantool's json module:
+ * small values as lua numbers, large values as cdata (long/unsigned long).
+ */
+void tt_lua_pushinteger64(lua_State *L, int64_t val);
+void tt_lua_pushuint64(lua_State *L, uint64_t val);
